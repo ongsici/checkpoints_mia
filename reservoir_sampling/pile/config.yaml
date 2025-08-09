@@ -1,0 +1,13 @@
+MIN_TARGET_SAMPLES: 1000
+OVERSAMPLE_EXTRA: 500
+MIN_SEQ_LEN: 2048
+TRAIN_GROUP: true # true for sampling training set, false for test set
+SEED: 42
+DATE: "1Jul"
+OUTPUT_FILE: "pile_train_reservoir_members_tokenized_v2.pkl"
+LLAMA_MODEL_NAME: "meta-llama/Llama-2-7b-hf"
+ALL_GROUPS:
+  - "Pile-CC"
+  - "Wikipedia (en)"
+  - "HackerNews"
+LOGFILE_TEMPLATE: "pile_reservoir_sampling_train_v2_{DATE}.log"
