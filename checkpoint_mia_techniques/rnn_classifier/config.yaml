@@ -3,6 +3,13 @@ BATCH_SIZE: 32
 PATIENCE: 5
 NUM_FOLDS: 5
 PILE_SUBSET: "wiki"
-MODEL: "pythia-6.9b"
+MODEL_NAME: "pythia-6.9b"
 DATASET_SEQ_LEN_TEMPLATE: "pile_reservoirv2_{PILE_SUBSET}_seqlen{SEQ_LEN}_{MODEL}_processed.pkl"
 DATASET_SEQ_LENS: [64, 128, 256, 512, 1024, 2048]
+RNN_MODEL_PARAMS:
+  input_size: 1
+  hidden_size: 64
+  extra_feat_dim: 3
+  rnn_type: "GRU"        # or "LSTM"
+  bidirectional: false
+  dropout: 0.0

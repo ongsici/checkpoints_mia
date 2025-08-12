@@ -145,8 +145,8 @@ def bag_of_words_basic(X,y, dataset_name, fpr_budget, plot_roc, hypersearch):
             auc_scores.append(roc_auc)
             tpr_scores.append(tpr_at_low_fpr)
         
-        print(f"Mean auc_score over {trials} runs: {mean(auc_scores)*100:.3f} \u00B1 {pstdev(auc_scores)*100:.0f}")
-        print(f"Mean tpr@{fpr_budget}%fpr over {trials} runs: {mean(tpr_scores)*100:.3f} \u00B1 {pstdev(tpr_scores)*100:.0f}")
+        print(f"Mean auc_score over {trials} runs: {mean(auc_scores)*100:.3f} \u00B1 {pstdev(auc_scores)*100:.3f}")
+        print(f"Mean tpr@{fpr_budget}%fpr over {trials} runs: {mean(tpr_scores)*100:.3f} \u00B1 {pstdev(tpr_scores)*100:.3f}")
     else:
         # Only one run to plot the TPR vs FPR curve
         train_classifier(X_train, X_test, y_train, y_test, fpr_budget, plot_roc, params=params)

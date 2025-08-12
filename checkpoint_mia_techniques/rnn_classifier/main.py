@@ -13,7 +13,7 @@ def read_dataset(DATASET_SEQ_LENS, PILE_SUBSET, MODEL):
 
     for seq_len in DATASET_SEQ_LENS:
         dataset_path = cfg["DATASET_SEQ_LEN_TEMPLATE"].format(PILE_SUBSET=PILE_SUBSET, SEQ_LEN=seq_len, MODEL=MODEL)
-        dataset[seq_len] =  pd.read_pickle(dataset_path)
+        dataset[seq_len] = pd.read_pickle(dataset_path)
 
     return dataset
 
@@ -25,12 +25,13 @@ if __name__ == "__main__":
     PATIENCE = cfg["PATIENCE"]
     NUM_FOLDS = cfg["NUM_FOLDS"]
     PILE_SUBSET = cfg["PILE_SUBSET"]
-    MODEL = cfg["MODEL"]
+    MODEL_NAME = cfg["MODEL_NAME"]
     DATASET_SEQ_LENS = cfg["DATASET_SEQ_LENS"]
 
-    dataset = read_dataset(DATASET_SEQ_LENS, PILE_SUBSET, MODEL)
+    dataset = read_dataset(DATASET_SEQ_LENS, PILE_SUBSET, MODEL_NAME)
 
     run_rnn_classifier(
+        model_cfg=cfg["RNN_MODEL_PARAMS"],
         num_epochs=NUM_EPOCHS,
         batch_size=BATCH_SIZE,
         patience=PATIENCE,

@@ -40,21 +40,28 @@ class Attention(nn.Module):
 
 
 class AttnRNNWithExtraFeatures(nn.Module):
-    def __init__(self, input_size=1, hidden_size=64, extra_feat_dim=3):
+    def __init__(self, cfg):
         super().__init__()
-        self.rnn = nn.GRU(input_size, hidden_size, batch_first=True)
-        self.attention = Attention(hidden_size)
-        self.fc = nn.Linear(hidden_size + extra_feat_dim, 1)
+        rnn_cls = nn.GRU if cfg["rnn_type"] == "GRU" else nn.LSTM
+        self.rnn = rnn_cls(
+            cfg["input_size"], 
+            cfg["hidden_size"], 
+            batch_first=True, 
+            bidirectional=cfg.get("bidirectional", False)
+        )
+        self.attention = Attention(cfg["hidden_size"] * (2 if cfg.get("bidirectional", False) else 1))
+        self.dropout = nn.Dropout(cfg.get("dropout", 0.0))
+        self.fc = nn.Linear(cfg["hidden_size"] * (2 if cfg.get("bidirectional", False) else 1) + cfg["extra_feat_dim"], 1)
 
     def forward(self, trace, extra_feat):
-        rnn_out, _ = self.rnn(trace)                # [batch, seq_len, hidden]
-        context, attn_weights = self.attention(rnn_out)  # [batch, hidden], [batch, seq_len]
-        combined = torch.cat((context, extra_feat), dim=1)  # [batch, hidden + extra_feat]
-        out = self.fc(combined)                     # [batch, 1]
+        rnn_out, _ = self.rnn(trace)
+        context, attn_weights = self.attention(rnn_out)
+        combined = torch.cat((context, extra_feat), dim=1)
+        out = self.fc(self.dropout(combined))
         return torch.sigmoid(out).squeeze(1), attn_weights
 
 
-def run_rnn_classifier(num_epochs, batch_size, patience, num_folds, df):
+def run_rnn_classifier(model_cfg, num_epochs, batch_size, patience, num_folds, df):
     # Hyperparameters
     NUM_EPOCHS = num_epochs
     BATCH_SIZE = batch_size
@@ -85,7 +92,7 @@ def run_rnn_classifier(num_epochs, batch_size, patience, num_folds, df):
         val_loader = DataLoader(val_subset, batch_size=BATCH_SIZE)
 
         # Initialize model, optimizer, loss
-        model = AttnRNNWithExtraFeatures().to(device)
+        model = AttnRNNWithExtraFeatures(model_cfg).to(device)
         criterion = nn.BCELoss()
         optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
