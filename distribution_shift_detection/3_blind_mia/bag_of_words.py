@@ -137,16 +137,27 @@ def bag_of_words_basic(X,y, dataset_name, fpr_budget, plot_roc, hypersearch):
 
     auc_scores = []
     tpr_scores = []
-    if not plot_roc: 
-        for _ in range(trials):
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=None)
-            roc_auc, tpr_at_low_fpr = train_classifier(X_train, X_test, y_train, y_test, fpr_budget, plot_roc, params=params)
-            print(roc_auc)
-            auc_scores.append(roc_auc)
-            tpr_scores.append(tpr_at_low_fpr)
+    # if not plot_roc: 
+    for _ in range(trials):
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=None)
+        roc_auc, tpr_at_low_fpr = train_classifier(X_train, X_test, y_train, y_test, fpr_budget, plot_roc, params=params)
+        print(roc_auc)
+        auc_scores.append(roc_auc)
+        tpr_scores.append(tpr_at_low_fpr)
+
+    mean_auc = mean(auc_scores)
+    mean_auc_stdev = pstdev(auc_scores)
+    mean_tpr = mean(tpr_scores)*100
+    mean_tpr_stdev = pstdev(tpr_scores)*100
+
+
         
-        print(f"Mean auc_score over {trials} runs: {mean(auc_scores)*100:.3f} \u00B1 {pstdev(auc_scores)*100:.3f}")
-        print(f"Mean tpr@{fpr_budget}%fpr over {trials} runs: {mean(tpr_scores)*100:.3f} \u00B1 {pstdev(tpr_scores)*100:.3f}")
-    else:
-        # Only one run to plot the TPR vs FPR curve
-        train_classifier(X_train, X_test, y_train, y_test, fpr_budget, plot_roc, params=params)
+    print(f"Mean auc_score over {trials} runs: {mean_auc:.3f} \u00B1 {mean_auc_stdev:.3f}")
+    print(f"Mean tpr@{fpr_budget}%fpr over {trials} runs: {mean_tpr:.3f} \u00B1 {mean_tpr_stdev:.3f}")
+    
+    return mean_auc, mean_auc_stdev, mean_tpr, mean_tpr_stdev
+    # else:
+    #     # Only one run to plot the TPR vs FPR curve
+    #     train_classifier(X_train, X_test, y_train, y_test, fpr_budget, plot_roc, params=params)
+
+    #     return None, None, None, None

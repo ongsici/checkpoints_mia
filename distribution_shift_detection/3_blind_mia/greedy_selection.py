@@ -159,3 +159,5 @@ def greedy_selection_basic(member_lines, nonmember_lines, dataset_name, fpr_budg
     if len(AUCS) > 0:  # NEW
         print(f"All AUCs: {AUCS}")
         print(f"Mean AUC over {CROSS_VALS} runs: {np.mean(AUCS):.4f} ± {np.std(AUCS):.4f}")  # NEW
+
+    return np.mean(AUCS), np.std(AUCS), np.mean(RES), np.std(RES)

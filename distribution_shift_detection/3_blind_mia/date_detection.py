@@ -48,6 +48,7 @@ def date_detection_basic(X, y, dataset_name, fpr_budget, plot_roc, cutoff_years=
     print(f"Max ROC AUC: {max_auc*100:.3f}%")
     print(f"Max TPR@{fpr_budget}%FPR: {max_tpr*100:.3f}%")
 
+    return max_auc, max_tpr
 
 def is_year(s):
     if len(s) == 2:
