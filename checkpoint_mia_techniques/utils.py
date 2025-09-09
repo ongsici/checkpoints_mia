@@ -40,7 +40,7 @@ def normalize_loss_dfs(dataset_dict: dict, loss_columns: list) -> dict:
 
 ## Plotting Loss Curves
 
-def plot_loss_curves(datasets, dataset_name):
+def plot_loss_curves(datasets, dataset_name, loss_columns=loss_columns, k_values=k_values):
     fig, axes = plt.subplots(nrows=math.ceil(len(datasets) / 2), ncols=2, figsize=(12, 18))
     axes = axes.flatten()
 
@@ -108,7 +108,7 @@ def plot_indv_loss_curves(dataset_dict, k_values, dataset_name):
 
 ## Plotting Baseline Attack ROC
 
-def plot_roc_curves(datasets, dataset_name, target_fpr):
+def plot_roc_curves(datasets, dataset_name, target_fpr, loss_columns=loss_columns):
     
     fig, axes = plt.subplots(nrows=math.ceil(len(datasets) / 2), ncols=2, figsize=(12, 18))
     axes = axes.flatten()
@@ -156,7 +156,7 @@ def plot_roc_curves(datasets, dataset_name, target_fpr):
         ax.plot(fpr_minkprob, tpr_minkprob, color='orange', label=f'Min-K% Prob (AUC = {roc_auc_minkprob:.3f})')
         ax.axhline(y=tpr_minkprob_at_target, color='orange', linestyle='--', label=f'LOSS TPR @ {target_fpr * 100}% FPR ({title} = {tpr_minkprob_at_target:.4f})')
         ax.plot(fpr_ratio, tpr_ratio, color='green', label=f'Ratio (AUC = {roc_auc_ratio:.3f})')
-        ax.axhline(y=tpr_ratio_at_target, color='green', linestyle='--', label=f'Ratio TPR @ 0.1% FPR ({title} = {tpr_ratio_at_target:.4f})')
+        ax.axhline(y=tpr_ratio_at_target, color='green', linestyle='--', label=f'Ratio TPR @ {target_fpr * 100}% FPR ({title} = {tpr_ratio_at_target:.4f})')
         
         ax.plot([0, 1], [0, 1], 'k--', label='Random')
 
