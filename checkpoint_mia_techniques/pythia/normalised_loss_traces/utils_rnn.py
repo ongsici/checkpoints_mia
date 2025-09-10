@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, roc_curve, auc
 from sklearn.model_selection import KFold
 from torch.utils.data import Subset
 import torch.nn as nn
@@ -11,18 +11,26 @@ import torch
 
 
 class LossTraceDataset(Dataset):
-    def __init__(self, dataframe):
+    def __init__(self, dataframe, model_cfg):
         self.loss_traces = dataframe['loss_traces'].tolist()
         self.labels = dataframe['label'].tolist()
-        self.extra_feats = dataframe[['lt_iqr_0.25_0.75', 'clfa_normalized', 'loss_trace_slope']].values
+        if model_cfg["extra_feat_dim"] == 3:
+            self.extra_feats = dataframe[['lt_iqr_0.25_0.75', 'clfa_normalized', 'loss_trace_slope']].values
+        elif model_cfg["extra_feat_dim"] == 2:
+            self.extra_feats = dataframe[['clfa_normalized', 's2conv']].values
+        else:
+            self.extra_feats = None
 
     def __len__(self):
         return len(self.loss_traces)
 
     def __getitem__(self, idx):
-        trace = torch.tensor(self.loss_traces[idx], dtype=torch.float32).unsqueeze(1)  
-        extra_feat = torch.tensor(self.extra_feats[idx], dtype=torch.float32)          
+        trace = torch.tensor(self.loss_traces[idx], dtype=torch.float32).unsqueeze(1)  # [seq_len, 1]
         label = torch.tensor(self.labels[idx], dtype=torch.float32)
+        if self.extra_feats is not None:
+            extra_feat = torch.tensor(self.extra_feats[idx], dtype=torch.float32)    
+        else:
+            extra_feat = torch.empty(0) 
         return trace, extra_feat, label
     
 class Attention(nn.Module):
@@ -37,8 +45,7 @@ class Attention(nn.Module):
         # Weighted sum of RNN outputs
         context = torch.sum(rnn_outputs * attn_weights.unsqueeze(-1), dim=1)  # [batch, hidden]
         return context, attn_weights
-
-
+    
 class AttnRNNWithExtraFeatures(nn.Module):
     def __init__(self, cfg):
         super().__init__()
@@ -61,20 +68,20 @@ class AttnRNNWithExtraFeatures(nn.Module):
         return torch.sigmoid(out).squeeze(1), attn_weights
 
 
-def run_rnn_classifier(model_cfg, num_epochs, batch_size, patience, num_folds, df):
-    # Hyperparameters
+def run_rnn_classifier(model_cfg, num_epochs, batch_size, patience, num_folds, df, target_fpr=0.01):
     NUM_EPOCHS = num_epochs
     BATCH_SIZE = batch_size
     PATIENCE = patience
     NUM_FOLDS = num_folds
+    LEARNING_RATE = model_cfg["learning_rate"]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # 1. Initial train+val / test split
     trainval_df, test_df = train_test_split(df, test_size=0.2, stratify=df['label'], random_state=42)
 
-    trainval_dataset = LossTraceDataset(trainval_df)
-    test_dataset = LossTraceDataset(test_df)
+    trainval_dataset = LossTraceDataset(trainval_df, model_cfg)
+    test_dataset = LossTraceDataset(test_df, model_cfg)
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE)
 
     # 2. K-Fold on train+val
@@ -93,8 +100,9 @@ def run_rnn_classifier(model_cfg, num_epochs, batch_size, patience, num_folds, d
 
         # Initialize model, optimizer, loss
         model = AttnRNNWithExtraFeatures(model_cfg).to(device)
+        # model = AttnRNNWithExtraFeatures_DotProduct(model_cfg).to(device)
         criterion = nn.BCELoss()
-        optimizer = optim.Adam(model.parameters(), lr=1e-3)
+        optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
         best_val_loss = float('inf')
         best_model_state = None
@@ -135,11 +143,11 @@ def run_rnn_classifier(model_cfg, num_epochs, batch_size, patience, num_folds, d
             all_labels = torch.cat(all_labels).numpy()
 
             try:
-                auc = roc_auc_score(all_labels, all_preds)
+                curr_auc = roc_auc_score(all_labels, all_preds)
             except ValueError:
-                auc = float('nan')
+                curr_auc = float('nan')
 
-            print(f"Epoch {epoch + 1}: Train Loss = {train_loss:.4f}, Val Loss = {val_loss:.4f}, AUC = {auc:.4f}")
+            print(f"Epoch {epoch + 1}: Train Loss = {train_loss:.4f}, Val Loss = {val_loss:.4f}, AUC = {curr_auc:.4f}")
 
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
@@ -172,6 +180,11 @@ def run_rnn_classifier(model_cfg, num_epochs, batch_size, patience, num_folds, d
 
         try:
             test_auc = roc_auc_score(test_labels, test_preds)
+            fpr, tpr, _ = roc_curve(test_labels, test_preds)
+            roc_auc = auc(fpr, tpr)
+
+            tpr_at_target = np.interp(target_fpr, fpr, tpr)
+        
         except ValueError:
             test_auc = float('nan')
 
@@ -180,19 +193,24 @@ def run_rnn_classifier(model_cfg, num_epochs, batch_size, patience, num_folds, d
         fold_metrics.append({
             'fold': fold + 1,
             'val_loss': best_val_loss,
-            'val_auc': auc,
+            'val_auc': curr_auc,
             'test_loss': test_loss,
-            'test_auc': test_auc
+            'test_auc': test_auc,
+            'check_test_auc': roc_auc,
+            'tpr_at_target_fpr': tpr_at_target
         })
 
-    # Summary
     print("\n✅ Cross-validation complete!")
     for m in fold_metrics:
-        print(f"Fold {m['fold']}: Val Loss = {m['val_loss']:.4f}, Val AUC = {m['val_auc']:.4f}, Test Loss = {m['test_loss']:.4f}, Test AUC = {m['test_auc']:.4f}")
+        print(f"Fold {m['fold']}: Val Loss = {m['val_loss']:.4f}, Val AUC = {m['val_auc']:.4f}, Test Loss = {m['test_loss']:.4f}, Test AUC = {m['test_auc']:.4f}, TPR @ {target_fpr * 100}% FPR = {m['tpr_at_target_fpr']:.4f}")
+        print(f'Checking AUC: {m["check_test_auc"]:.4f}')
 
     avg_test_loss = np.mean([m['test_loss'] for m in fold_metrics])
     avg_test_auc = np.nanmean([m['test_auc'] for m in fold_metrics])
+    avg_tpr_at_target = np.nanmean([m['tpr_at_target_fpr'] for m in fold_metrics])
     std_test_auc = np.nanstd([m['test_auc'] for m in fold_metrics], ddof=1)
     print(f"\n📊 Average Test Loss: {avg_test_loss:.4f}")
     print(f"📈 Average Test AUC: {avg_test_auc:.4f}")
     print(f"Test AUC Std Dev: {std_test_auc:.4f}")
+    print(f"📉 Average TPR @ {target_fpr * 100}% FPR: {avg_tpr_at_target:.4f}")
+    print(f"TPR Std Dev: {np.nanstd([m['tpr_at_target_fpr'] for m in fold_metrics], ddof=1):.4f}")

@@ -1,0 +1,12 @@
+NUM_EPOCHS: 50
+BATCH_SIZE: 32
+PATIENCE: 5
+NUM_FOLDS: 5
+model:
+  input_size: 1
+  hidden_size: 64
+  extra_feat_dim: 2
+  rnn_type: "GRU"      
+  bidirectional: false
+  dropout: 0.2
+  learning_rate: 0.001
