@@ -1,7 +1,7 @@
 # Leveraging Checkpoints for Membership Inference Attacks
 
 This repository contains the code, configurations, and analysis scripts for my Master's thesis:  
-**"Leveraging Model Checkpoints to Improve Membership Inference Attacks in Large Language Models"**.
+**"Leveraging Model Checkpoints to Improve Membership Inference Attacks in Large Language Models"**. The full thesis can be found [here](thesis/Thesis_Leveraging_Model_Checkpoints_for_MIAs_LLMs.pdf).
 
 ## Abstract
 
