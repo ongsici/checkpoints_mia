@@ -60,8 +60,3 @@ We separately share the pre-processed formats of the sampled data, and results o
   url    = {https://doi.org/10.5281/zenodo.18432572}
 }
 
-
-<!-- ### 1️⃣ Clone the repository
-```bash
-git clone https://github.com/ongsici/checkpoints_mia.git
-cd checkpoints_mia -->
