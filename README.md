@@ -50,6 +50,7 @@ We separately share the pre-processed formats of the sampled data, and results o
 
 ## 📚 Citation
 
+```bibtex
 @mastersthesis{SiCiOng2025CheckpointsMIA,
   title  = {Leveraging Checkpoints for Membership Inferece Attacks on Large Language Models},
   author = {Si Ci Ong},
