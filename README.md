@@ -1,4 +1,4 @@
-# Leveraging Checkpoints for Membership Inference Attacks
+# Leveraging Checkpoints for Membership Inference Attacks on LLMs
 
 This repository contains the code, configurations, and analysis scripts for my Master's thesis:  
 **"Leveraging Model Checkpoints to Improve Membership Inference Attacks in Large Language Models"**. The full thesis can be found [here](thesis/Thesis_Leveraging_Model_Checkpoints_for_MIAs_LLMs.pdf).
@@ -46,6 +46,19 @@ We share the sampled datasets on HuggingFace: (1) [Pile-RS-Truncated](https://hu
 4. `data`
 
 We separately share the pre-processed formats of the sampled data, and results of checkpoint losses evaluated for all samples. The data can be downloaded [here](https://imperiallondon-my.sharepoint.com/:f:/g/personal/sco115_ic_ac_uk/EvLGD6RHBsFLo91TbeOKrMIBNEpT-4emQKPFVR6FXvAGUg?e=AeqMLd) and placed within this folder.
+
+
+## 📚 Citation
+
+@mastersthesis{SiCiOng2025CheckpointsMIA,
+  title  = {Leveraging Checkpoints for Membership Inferece Attacks on Large Language Models},
+  author = {Si Ci Ong},
+  year   = {2025},
+  school = {Imperial College London},
+  doi    = {10.5281/zenodo.18432572},
+  url    = {https://doi.org/10.5281/zenodo.18432572}
+}
+
 
 <!-- ### 1️⃣ Clone the repository
 ```bash
